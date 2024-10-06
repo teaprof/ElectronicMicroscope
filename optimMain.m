@@ -1,4 +1,5 @@
 function optimMain
+    rng(1);
     Clock = clock;
     pathToSave = sprintf('results/run%4d-%02d-%02d-%02d-%02d-%02d', floor(Clock));
     mkdir(pathToSave);
@@ -10,13 +11,14 @@ function optimMain
     range(getDim('r2_minus_r1'), :) = [1e-4 1e-3]; %м
     range(getDim('EMamplitude'), :) = [1e+5 1e+9]; %В/м
     range(getDim('EMphase'), :) = [0 2*pi]; %рад
-    range(getDim('EStart'), :) = [0.6 100]*1e+6; %эВ
+    range(getDim('EStart'), :) = [0.6 200]*1e+6; %эВ
+%     range(getDim('EStart'), :) = [0.6 0.6]*1e+6; %эВ
     range(getDim('tmax'), :) = [20e-12 100e-12]; %с
     assert(prod(prod(~isnan(range))) == 1); %если ничего не забыли проинициализировать, то NaN быть не должно
     lb = range(:, 1).*getScale;
     ub = range(:, 2).*getScale;
     
-    electronsPerParticle = 1e+4;    
+    electronsPerParticle = 1e+4;
     
     %Создаём ансамбль частиц, распределённых в цилиндре радиусом 1 и
     %высотой 1. Этот ансамбль будет потом в соответствующих пропорциях
@@ -37,8 +39,8 @@ function optimMain
     
    
     %Глобальный поиск
-    NTrials = 1e+1;
-    Nbest = 8;
+    NTrials = 1e+0;
+    Nbest = min(NTrials, 8);
     f = @(x)targetFcn(x, r0, v0, electronsPerParticle);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);
 %     drawSlices(f, lb, ub, {'vphase', 'E', 'phase0', 'tspan'}) %тут можно вызвать другой визуализатор todo: переписать функцию для многомерного использования, а не только для dim=3    
@@ -59,7 +61,7 @@ function optimMain
 %     fprintf('Minimum length %f mm\n', y*1e+3);
 %     fprintf('Compression level %f\n', y/y0);
     save('optimMainSave');
-    return;
+%     return;
 %     load('optimMainSave');
     
 %     spmd
@@ -107,7 +109,8 @@ function OutputSolution(sol, geom, traj, x, pathToSave, suffix)
     
     %Сохраняем результаты в виде текста
     [r0, v0] = XtoPhase(traj.rv(:, 1));
-    [sol, r, v, tmax] = XtoStruct(x, geom, sol, r0, v0);
+    %[sol, r, v, tmax] = XtoStruct(x, geom, sol, r0, v0);
+    [sol, r, v, tmax] = XtoStruct(x, r0, v0);
     Estart = getValue(x, 'EStart');
     f = fopen([pathToSave, '/params', suffix, '.txt'], 'w+');    
     fprintf(f, 'E0 = %g MeV\n', Estart*1e-6);
@@ -220,7 +223,7 @@ end
 function [v, EMsolution, traj] = targetFcn(x, r0, v0, electronsPerParticle)
     [EMsolution, r0, v0, tmax] = XtoStruct(x, r0, v0);
     tspan = [0 tmax];
-    traj = simElectorns(r0, v0, EMsolution, tspan, electronsPerParticle);
+    traj = simElectrons(r0, v0, EMsolution, tspan, electronsPerParticle);
     
     %Результат - это средний размер ансамбля за последнюю p-часть  времени
     v = zeros(numel(traj.t), 1);

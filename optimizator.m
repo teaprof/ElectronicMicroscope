@@ -1,5 +1,5 @@
 function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
-    assert(NTrials > Nbest);
+    assert(NTrials >= Nbest);
     
     fprintf('Global phase\n');
     
@@ -16,7 +16,7 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     end
     P.done();
     
-    [yy, idx] = sort(yy);    
+    [yy, idx] = sort(yy);
     xx = xx(:, idx);
     
     %Увеличиваем допустимые пределы по фазе перед локальной оптимизацией,

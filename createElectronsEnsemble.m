@@ -27,6 +27,8 @@ function [r0, v0] = createElectronsEnsemble(v0norm, rmax, zspan, pattern, vararg
             n = varargin{3};
             m = varargin{4};
             [r0, v0] = createElectronsGrid(v0norm, rmax, z1, z2, N, M, n, m);
+        otherwise
+            error("unrecognized pattern")
     end
     idx = findUniqElectrons(r0, 1e-6);
     r0 = r0(:, idx);
@@ -64,8 +66,8 @@ end
 
 
 function [r0, v0] = createElectronsRegular(v0norm, r, z1, z2, N, M)
-    v0 = repmat([0; 0; v0norm], 1, N);
-    
+    v0 = repmat([0; 0; v0norm], 1, N*M);
+    r0 = zeros(3, N*M);
     for n = 1 : N
         for m = 1 : M
             x = 2*r*((n-0.5)/N - 0.5);

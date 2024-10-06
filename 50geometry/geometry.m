@@ -21,6 +21,8 @@ classdef geometry
             if strcmp(geomtype, 'none')
                 return;
             elseif strcmp(geomtype, 'simple')
+                %Содержит 100 слоёв из вакуума, решение должно совпадать с
+                %однослойным решением для вакуума.
 %                 obj = addLayer(obj, 1, 1, 1e-3);
                 nLayers = 100;
                 for r = linspace(0, 10, nLayers + 1)

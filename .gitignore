@@ -1,0 +1,7 @@
+*.avi
+95video/*
+results/*
+*.mexw64
+codegen
+*.asv
+
