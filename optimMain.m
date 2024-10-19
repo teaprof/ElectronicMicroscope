@@ -16,7 +16,7 @@ function optimMain
     lb = range(:, 1).*getScale;
     ub = range(:, 2).*getScale;
     
-    electronsPerParticle = 1e+4;    
+    electronsPerParticle = 1e+4;
     
     %Создаём ансамбль частиц, распределённых в цилиндре радиусом 1 и
     %высотой 1. Этот ансамбль будет потом в соответствующих пропорциях
