@@ -1,4 +1,8 @@
 function xt = rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution)
+%Несмотря на то, что учитывается запаздывающий потенциал, для уравнения
+%движения используется нерелятивистское приближение, а именно: dv/dt = F.
+%В релятивистком случае надо рассматривать d(gamma(t)*m*v(t))/dt = F,
+%где gamma(t) = 1/sqrt(1 - beta^2), beta = v/c.
     q = getElectronCharge;
     m = getElectronMass;
     [r, v] = XtoPhase(x, N);

@@ -1,18 +1,20 @@
 function sol = simMain
-%     geom = geometry('simple');
-%     geom = geometry;
-%     w = 2*pi*1e+12;
-%     m = 0;
-%     waveguideSolver = WaveguideSolver(geom, w, m);
-%     waveguideSolver = waveguideSolver.solve;
-%     for n = 1 : min(numel(waveguideSolver.solutions), 10)
-%         waveguidePlot(waveguideSolver.solutions{n});
-%     end
-%     sol = waveguideSolver.sol;
-%     electronsPerParticle = 1e+4;    
-%     save('simMain');
-%     return;
-    load('simMain');
+    if isfile('simMain.mat')
+        load('simMain');
+    else
+        geom = geometry('simple');
+        geom = geometry;
+        w = 2*pi*1e+12;
+        m = 0;
+        waveguideSolver = WaveguideSolver(geom, w, m);
+        waveguideSolver = waveguideSolver.solve;
+        for n = 1 : min(numel(waveguideSolver.solutions), 10)
+            waveguidePlot(waveguideSolver.solutions{n});
+        end
+        sol = waveguideSolver.sol;
+        electronsPerParticle = 1e+4;    
+        save('simMain');
+    end
     vphase = (0.95 + 0.05*rand)*getSpeedOfLight;
     sol.kz = sol.w/vphase;
     lambda = 2*pi/sol.kz;
