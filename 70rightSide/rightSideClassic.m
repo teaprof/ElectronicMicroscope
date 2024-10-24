@@ -12,7 +12,7 @@ function xt = rightSideClassic(t, x, N, EMfieldSolution, electronsPerParticle)
     vt = vt + getAcceleration(q, m, v, E, B);
 
     %Учитываем взаимодействие каждый-с-каждым
-%     [E, B] = getFieldClassic(q, r, v)            %эталонная реализация
+%     [E, B] = getFieldClassic(q, r, v);            %эталонная реализация
 %     [E, B] = getFieldClassicVectorized(q, r, v);
 %     [E, B] = getFieldClassicGPU(q, r, v);
     [E, B] = getFieldClassicCoderMex(q, r, v);     %самый быстрый, см. benchEBClassicVariants

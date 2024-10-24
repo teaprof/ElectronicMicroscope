@@ -4,7 +4,7 @@ function traj = simElectrons(r0, v0, EMfieldSolution, tspan, electronsPerParticl
 %1. Interaction with retarded potentials    
 %     sol = ode_retarded(@(t, x, thistory, xhistory) rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution, electronsPerParticle), tspan, x0, 'acceleration');
 
-%2. Interaction with classic potentials    
+%2. Interaction with classic potentials
     sol = ode45(@(t, x) rightSideClassic(t, x, N, EMfieldSolution, electronsPerParticle), tspan, x0);
 
 %3. No interaction

@@ -2,11 +2,13 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     assert(NTrials >= Nbest);
     
     fprintf('Global phase\n');
-    
+    seeds = randi(hex2dec('FFFFFFFF'), NTrials, 1);
+
     P = ProgressObj(NTrials);
     yy = zeros(1, NTrials);
     xx = zeros(numel(lb), NTrials);
     for n = 1 : NTrials
+        rng(seeds(n))
         x = lb + (ub - lb).*rand(size(lb));
         xx(:, n) = x;
         yy(n) = f(x);
@@ -30,20 +32,21 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     xx = xx(:, idx(1:Nbest));
     
     %"Дожимаем" лучшие решения локальным солвером    
-%     fprintf('Local phase\n');
-%     opts = optimoptions('fmincon', 'Algorithm', 'active-set', 'Display', 'final-detailed', 'MaxFunctionEvaluations', 200, 'FunctionTolerance', 1e-10);
-%     P = ProgressObj(Nbest);
-%     parfor n = 1 : Nbest
-%         [xxx, yyy] = fmincon(f, xx(:, n), [], [], [], [], lb, ub, [], opts);  
-%         %К сожалению, вызов fmincon не всегда заканчивается улучшением
-%         %решения
-%         if yyy < yy(n)
-%             xx(:, n) = xxx;
-%             yy(n) = yyy;
-%         end
-%         P.increase(1);
-%     end
-%     P.done();
+    fprintf('Local phase\n');
+    opts = optimoptions('fmincon', 'Algorithm', 'active-set', 'Display', 'final-detailed', 'MaxFunctionEvaluations', 200, 'FunctionTolerance', 1e-10);
+    P = ProgressObj(Nbest);
+    parfor n = 1 : Nbest
+        fprintf('n = %d, seed = %d\n', n, seeds(idx(n)));
+        [xxx, yyy] = fmincon(f, xx(:, n), [], [], [], [], lb, ub, [], opts);  
+        %К сожалению, вызов fmincon не всегда заканчивается улучшением
+        %решения
+        if yyy < yy(n)
+            xx(:, n) = xxx;
+            yy(n) = yyy;
+        end
+        P.increase(1);
+    end
+    P.done();
     
     [yy, idx] = sort(yy);    
     xx = xx(:, idx);

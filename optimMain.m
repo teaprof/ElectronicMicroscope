@@ -30,7 +30,7 @@ function optimMain
 %     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'grid', 5, 5, 19, 19);
 %     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'regular', 5, 5);
 %   [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'unirandom', 1e+2);
-    [r0, v0] = createElectronsEnsemble(1, 1, [0 1e-4], 'normal', 1e+2);
+    [r0, v0] = createElectronsEnsemble(1, 1, [0 1e-4], 'normal', 1e+1);
     
     NParticles = size(r0, 2);
     
@@ -39,14 +39,14 @@ function optimMain
     
    
     %Глобальный поиск
-    NTrials = 1e+0;
-    Nbest = min(NTrials, 8);
-    f = @(x)targetFcn(x, r0, v0, electronsPerParticle);
+    NTrials = 1e+1; %количество статистических испытаний для глобального поиска
+    Nbest = min(NTrials, 4); %количество решений, которые будут дожиматься локальным оптимизатором
+    f = @(x)targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);
 %     drawSlices(f, lb, ub, {'vphase', 'E', 'phase0', 'tspan'}) %тут можно вызвать другой визуализатор todo: переписать функцию для многомерного использования, а не только для dim=3    
 
     
-    %Печатаем таблицу лучших решений    
+    %Печатаем таблицу лучших решений 
     for n = 1 : min(Nbest, NTrials)
         fprintf('#%d: x = [',  n);
         for k = 1 : size(xx, 1)
@@ -71,9 +71,10 @@ function optimMain
         [start, finish] = getSubJob(MaxN, labindex, numlabs);
         for n = start : finish
             geom.r = 1e-3;
-            [y, sol, traj] = targetFcn(xx(:, n), r0, v0, electronsPerParticle);
+            [EMsolution, r, v, tmax] = XtoStruct(xx(:, n), r0, v0);
+            traj = simflight(EMsolution, r, v, tmax, electronsPerParticle);
             suffix = sprintf('%02d', n);
-            OutputSolution(sol, geom, traj, xx(:, n), pathToSave, suffix);
+            OutputSolution(EMsolution, geom, traj, xx(:, n), pathToSave, suffix);
         end
     end
 %     end
@@ -157,12 +158,12 @@ function scale = getScale
 %используется, чтобы привести все переменные, по которым проводится
 %оптимизация, к одному порядку величины
     scale = zeros(getDim, 1);
-    scale(getDim('r1')) = 1;
-    scale(getDim('r2_minus_r1')) = 1;
-    scale(getDim('EMamplitude')) = 1e-6;
+    scale(getDim('r1')) = 1e+3;
+    scale(getDim('r2_minus_r1')) = 1e+3;
+    scale(getDim('EMamplitude')) = 1e-4;
     scale(getDim('EMphase')) = 1;
-    scale(getDim('EStart')) = 1;
-    scale(getDim('tmax')) = 1e-12;
+    scale(getDim('EStart')) = 1e-6;
+    scale(getDim('tmax')) = 1e+12;
     assert(prod(scale) ~= 0); %если ничего не забыли проинициализировать, то нулей быть не должно
 end
 
@@ -220,8 +221,26 @@ function x = StructToX(r1, dr, EMamplitude, EMphase, tmax)
     x = x.*getScale;
 end
 
-function [v, EMsolution, traj] = targetFcn(x, r0, v0, electronsPerParticle)
+%function [v, EMsolution, traj] = targetFcnExtended(x, r0, v0, electronsPerParticle)
+function v = targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub)
+%fmincon function can violate constrains at intermediate iterations. We
+%expand our target function beyond [lb, ub] 
     [EMsolution, r0, v0, tmax] = XtoStruct(x, r0, v0);
+    %Check violation of boundaries for tmax only. If tmax < 0 then ode45
+    %solver produces inacceptable sequence of points.
+    x(x < lb) = lb(x < lb);
+    x(x > ub) = ub(x > ub);
+    if tmax == 0
+        v = getEnsembleLength(r0);
+        return;
+    end
+    %[v, EMsolution, traj] = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle);
+    v = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle);
+end
+    
+    
+%function [v, EMsolution, traj] = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle)    
+function v = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle)    
     tspan = [0 tmax];
     traj = simElectrons(r0, v0, EMsolution, tspan, electronsPerParticle);
     
@@ -235,6 +254,11 @@ function [v, EMsolution, traj] = targetFcn(x, r0, v0, electronsPerParticle)
     p = 0.2;
     t = linspace(tspan(1) + diff(tspan)*(1-p), tspan(2), 1000);
     v = max(v(t));
+end
+
+function traj = simflight(EMsolution, r0, v0, tmax, electronsPerParticle)    
+    tspan = [0 tmax];
+    traj = simElectrons(r0, v0, EMsolution, tspan, electronsPerParticle);
 end
 
 function v = getEnsembleLength(Z)

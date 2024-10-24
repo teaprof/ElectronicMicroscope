@@ -13,7 +13,7 @@ function sol = simMain
 %     save('simMain');
 %     return;
     load('simMain');
-    vphase = (0.8 + 0.1*rand)*getSpeedOfLight;
+    vphase = (0.95 + 0.05*rand)*getSpeedOfLight;
     sol.kz = sol.w/vphase;
     lambda = 2*pi/sol.kz;
     
