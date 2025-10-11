@@ -1,6 +1,7 @@
 function animateFlight2(EMfieldSolution, traj, varargin)
     %Парсим параметры
-%     load;
+    %load;
+    %save;
     parser = inputParser;
     parser.addParameter('zhalfwidth', 1e-5, @isnumeric);
     parser.addParameter('rmax', 3e-3, @isnumeric);

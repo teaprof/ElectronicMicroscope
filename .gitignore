@@ -2,6 +2,8 @@
 95video/*
 results/*
 *.mexw64
+*.mexa64
+*.bak
 codegen
 *.asv
 

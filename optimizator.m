@@ -1,4 +1,7 @@
 function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
+%function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
+%
+% Implement multistart algorithm
     assert(NTrials >= Nbest);
     
     fprintf('Global phase\n');
@@ -33,9 +36,10 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     
     %"Дожимаем" лучшие решения локальным солвером    
     fprintf('Local phase\n');
-    opts = optimoptions('fmincon', 'Algorithm', 'active-set', 'Display', 'final-detailed', 'MaxFunctionEvaluations', 200, 'FunctionTolerance', 1e-10);
+    opts = optimoptions('fmincon', 'Algorithm', 'active-set', 'Display', 'final-detailed', 'MaxFunctionEvaluations', 50, 'FunctionTolerance', 1e-5);
     P = ProgressObj(Nbest);
     parfor n = 1 : Nbest
+    %for n = 1 : Nbest
         fprintf('n = %d, seed = %d\n', n, seeds(idx(n)));
         [xxx, yyy] = fmincon(f, xx(:, n), [], [], [], [], lb, ub, [], opts);  
         %К сожалению, вызов fmincon не всегда заканчивается улучшением

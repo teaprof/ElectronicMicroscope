@@ -47,7 +47,7 @@ classdef WaveguideSolution
         %значение функции Неймана бесконечно)
         C1span %диапазон поиска решений по C1
         C2span %диапазон поиска решений по C2
-        kzspan % диапазон для kz(i)
+        kzspan %диапазон для kz (kz  у всех слоёв имеет одинаковое значение)
     end
     properties(SetAccess = private, GetAccess = public)
         %Зависимые коэффициенты в решении (обновляются с помощью
@@ -76,7 +76,9 @@ classdef WaveguideSolution
 %             besselzero = fzero(@(x) besselj(obj.m, x), guess); %первый нуль функции Бесселя
 %             kxymin_last = 0.8*besselzero/obj.r(end); %последний слой сопрягается с металлом - тут не учтено, что есть ещё функция Неймана
                         
-            obj.kzspan = [0, min(sqrt(obj.k2) - 0.1)];
+            %Диапазон для поиска kz:
+            obj.kzspan = [1, min(sqrt(obj.k2) - 0.1)];
+            assert(obj.kzspan(1) < obj.kzspan(2))            
             obj.kz = obj.kzspan(2);
             for n = 1 : geometry.nlayers
                 obj.C1span(n, :) = [-Inf; Inf];

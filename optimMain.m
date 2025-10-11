@@ -18,7 +18,7 @@ function optimMain
     lb = range(:, 1).*getScale;
     ub = range(:, 2).*getScale;
     
-    electronsPerParticle = 1e+4;
+    electronsPerParticle = 1e+3;
     
     %Создаём ансамбль частиц, распределённых в цилиндре радиусом 1 и
     %высотой 1. Этот ансамбль будет потом в соответствующих пропорциях
@@ -30,7 +30,7 @@ function optimMain
 %     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'grid', 5, 5, 19, 19);
 %     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'regular', 5, 5);
 %   [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'unirandom', 1e+2);
-    [r0, v0] = createElectronsEnsemble(1, 1, [0 1e-4], 'normal', 1e+1);
+    [r0, v0] = createElectronsEnsemble(1, 1, [0 1e-4], 'normal', 1e+1); %todo: magic values 1->waveguide inner radius, 1e-4 -> waveguide len
     
     NParticles = size(r0, 2);
     
@@ -40,7 +40,7 @@ function optimMain
    
     %Глобальный поиск
     NTrials = 1e+1; %количество статистических испытаний для глобального поиска
-    Nbest = min(NTrials, 4); %количество решений, которые будут дожиматься локальным оптимизатором
+    Nbest = min(NTrials, 30); %количество решений, которые будут дожиматься локальным оптимизатором
     f = @(x)targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);
 %     drawSlices(f, lb, ub, {'vphase', 'E', 'phase0', 'tspan'}) %тут можно вызвать другой визуализатор todo: переписать функцию для многомерного использования, а не только для dim=3    
@@ -71,10 +71,10 @@ function optimMain
         [start, finish] = getSubJob(MaxN, labindex, numlabs);
         for n = start : finish
             geom.r = 1e-3;
-            [EMsolution, r, v, tmax] = XtoStruct(xx(:, n), r0, v0);
+            [EMsolution, r, v, tmax, cur_xx] = XtoStruct(xx(:, n), r0, v0);
             traj = simflight(EMsolution, r, v, tmax, electronsPerParticle);
             suffix = sprintf('%02d', n);
-            OutputSolution(EMsolution, geom, traj, xx(:, n), pathToSave, suffix);
+            OutputSolution(EMsolution, geom, traj, cur_xx, pathToSave, suffix);
         end
     end
 %     end
@@ -151,6 +151,9 @@ function idx = getDim(name)
 end
 
 function val = getValue(x, name)
+    %scale = getScale();
+    %dim_idx = getDim(name);
+    %val = x(dim_idx)/scale(dim_idx);
     val = x(getDim(name));
 end
     
@@ -167,7 +170,7 @@ function scale = getScale
     assert(prod(scale) ~= 0); %если ничего не забыли проинициализировать, то нулей быть не должно
 end
 
-function [EMsolution, r, v, tmax] = XtoStruct(x, r0, v0)
+function [EMsolution, r, v, tmax, x] = XtoStruct(x, r0, v0)
     x = x./getScale;
     r1 =  getValue(x, 'r1'); %внутренний диаметр волновода
     r2_minus_r1 =  getValue(x, 'r2_minus_r1'); %толщина диэлектрической стенки волновода
@@ -184,7 +187,7 @@ function [EMsolution, r, v, tmax] = XtoStruct(x, r0, v0)
     geom = geometry('none');
     geom = geom.addLayer(5.5, 1, r1);
     geom = geom.addLayer(1, 1, r2);
-    w = 2*pi*1e+12;
+    w = 2*pi*1e+12; % Hz %todo: make as parameter
     m = 0;
     waveguideSolver = WaveguideSolver(geom, w, m);
     

@@ -10,24 +10,30 @@ classdef WaveguideSolver
         end
         
         function obj = solve(obj)
-            y = Inf;
             [x0, lb, ub] = obj.solToX;
             lb(lb == -Inf) = -1e+5;
             ub(ub == Inf) = 1e+5;
             f = @(x) targetFcn(obj, unfold(obj, x, lb, ub));
             lbfolded = fold(obj, lb, lb, ub);
             ubfolded = fold(obj, ub, lb, ub);
-            opts = optimoptions('lsqnonlin', 'Display', 'none', 'FunctionTolerance', 1e-8, 'StepTolerance', 1e-8, 'MaxFunctionEvaluations', 1e+6, 'MaxIterations', 1e+6);
-            kz_values = linspace(obj.sol.k_vacuum, 1, 1e+3);
+            opts = optimoptions('lsqnonlin', 'Display', 'none', 'FunctionTolerance', 1e-8, 'StepTolerance', 1e-12, 'MaxFunctionEvaluations', 1e+4, 'MaxIterations', 1e+4);
+            %opts2 = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt', 'Display', 'none'); %'FunctionTolerance', 1e-8, 'StepTolerance', 1e-12, 'MaxFunctionEvaluations', 1e+6, 'MaxIterations', 1e+6);
+            %kz_values = linspace(obj.sol.k_vacuum, 1, 1e+2);
+            kz_values = logspace(log10(ub(end)), log10(lb(end)), 1e+2); %last element of ub and lb is kz
             xcur = zeros(numel(lbfolded), numel(kz_values));
             ycur = zeros(1, numel(kz_values));
             parfor n = 1 : numel(kz_values)
+            %for n = 1 : numel(kz_values)
                 x0cur = obj.setKz(kz_values(n), x0, lb, ub);
                 [xcur(:, n), ycur(n)] = lsqnonlin(f, fold(obj, x0cur, lb, ub), lbfolded, ubfolded, opts);
 %                 sol1 = obj.XtoSol(unfold(obj, xcur(:, n), lb, ub));
 %                 waveguidePlot(sol1);
 %                 f(xcur(:, n));
             end
+            %удаляем значения, для которых не удалось достичь околонулевых
+            %значений ycur (суммы квадратов)
+            idx = ycur < 1e-5;
+            xcur = xcur(:, idx);
             [~, idx] = obj.uniqapprox(xcur(end, :)); %массив всех возможных kz
             for n = 1 : min(10, numel(idx))
                 x = xcur(:, idx(n));
