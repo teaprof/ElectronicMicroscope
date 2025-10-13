@@ -10,7 +10,7 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     P = ProgressObj(NTrials);
     yy = zeros(1, NTrials);
     xx = zeros(numel(lb), NTrials);
-    for n = 1 : NTrials
+    parfor n = 1 : NTrials
         rng(seeds(n))
         x = lb + (ub - lb).*rand(size(lb));
         xx(:, n) = x;
@@ -39,7 +39,6 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     opts = optimoptions('fmincon', 'Algorithm', 'active-set', 'Display', 'final-detailed', 'MaxFunctionEvaluations', 50, 'FunctionTolerance', 1e-5);
     P = ProgressObj(Nbest);
     parfor n = 1 : Nbest
-    %for n = 1 : Nbest
         fprintf('n = %d, seed = %d\n', n, seeds(idx(n)));
         [xxx, yyy] = fmincon(f, xx(:, n), [], [], [], [], lb, ub, [], opts);  
         %К сожалению, вызов fmincon не всегда заканчивается улучшением
