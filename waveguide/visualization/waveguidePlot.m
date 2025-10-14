@@ -14,17 +14,17 @@ function waveguidePlot(sol, filename_base) %рисовалка
     if numel(filename_base) > 0
         saveas(gcf, sprintf('%s%s.png', filename_base, '_3d'));
     end
-    WaveguidePlot2D(sol);
+    WaveguidePlot2D_EzEr(sol);
     if numel(filename_base) > 0
-        saveas(gcf, sprintf('%s%s.png', filename_base, '_1'));
+        saveas(gcf, sprintf('%s%s.png', filename_base, '_EzEr'));
     end
-    WaveguidePlot2D_2(sol);
+    WaveguidePlot2D_EzHphi(sol);
     if numel(filename_base) > 0
-        saveas(gcf, sprintf('%s%s.png', filename_base, '_2'));
+        saveas(gcf, sprintf('%s%s.png', filename_base, '_EzHphi'));
     end
 end
 
-function WaveguidePlot2D(sol) %рисовалка
+function WaveguidePlot2D_EzHphi(sol) %рисовалка
     npointsPerLayer = 300;
     r = zeros(sol.nlayers*npointsPerLayer, 1);
     nlayer = zeros(sol.nlayers*npointsPerLayer, 1);
@@ -64,7 +64,7 @@ function WaveguidePlot2D(sol) %рисовалка
     end
 end
 
-function WaveguidePlot2D_2(sol) %рисовалка
+function WaveguidePlot2D_EzEr(sol) %рисовалка
     npointsPerLayer = 300;
     r = zeros(sol.nlayers*npointsPerLayer, 1);
     nlayer = zeros(sol.nlayers*npointsPerLayer, 1);

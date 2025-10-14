@@ -39,3 +39,8 @@ retarded -- very slow
 
 
 exportGraphics
+
+
+![Alt text](figures/TM_00_01_mode_1.png)
+![Alt text](figures/TM_00_01_mode_2.png)
+![Alt text](figures/TM_00_01_mode_3d.png)
