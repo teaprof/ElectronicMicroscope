@@ -38,13 +38,12 @@ function optimMain
     fprintf('Charge %f pC\n', charge*1e+12);
     
    
-    %Глобальный поиск
+    %Глобальный поиск экстремума
     NTrials = 1e+4; %количество статистических испытаний для глобального поиска
     Nbest = min(NTrials, 20); %количество решений, которые будут дожиматься локальным оптимизатором
     f = @(x)targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);
     %drawSlices(f, lb, ub, {'vphase', 'E', 'phase0', 'tspan'}) %тут можно вызвать другой визуализатор todo: переписать функцию для многомерного использования, а не только для dim=3    
-
     
     %Печатаем таблицу лучших решений 
     for n = 1 : Nbest
@@ -54,16 +53,7 @@ function optimMain
         end
         fprintf('], y = %f mm\n', yy(n)*1e+3);
     end
-
-    
-%     [y, idx] = min(yy);
-%     x = xx(:, idx);
-%     fprintf('Minimum length %f mm\n', y*1e+3);
-%     fprintf('Compression level %f\n', y/y0);
-    save('optimMainSave');
-%     return;
-%     load('optimMainSave');
-        
+           
     P = ProgressObj(Nbest);
     parfor n = 1:Nbest
         suffix = sprintf('%02d', n);
@@ -76,17 +66,12 @@ end
 function OutputSolution(x, r0, v0, electronsPerParticle, pathToSave, suffix)
     %Пересчитываем траекторию с большей детализацией
     fprintf('Reconstructing optimal config track\n');
-%     tspan(2) = tspan(2)*1.5;
-%     electronsPerParticle = electronsPerParticle/10;
-%     [r0, v0] = createElectronsEnsemble(geom.r(1)*0.1, [0 1e-4], 'random', size(r0, 2)*10);
-%     f = @(x)targetFcn(x, geom, sol0, r0, v0, electronsPerParticle);
-%     [y, sol, traj] = f(x);
     [sol, r, v, tmax, ~] = XtoStruct(x, r0, v0);
-    traj = simflight(sol, r, v, tmax, electronsPerParticle);
+    traj = simflight(sol, r, v, tmax, electronsPerParticle);    
 
 
     y0 = getEnsembleLength(traj.Z(:, 1));
-    y = getEnsembleLength(traj.Z(:, end));
+    y = targetFcn(traj);
     fprintf('Initial length %f mm\n', y0*1e+3);
     fprintf('Final length %f mm\n', y*1e+3);
     fprintf('Compression level %f\n', y/y0);
@@ -103,12 +88,9 @@ function OutputSolution(x, r0, v0, electronsPerParticle, pathToSave, suffix)
     saveas(f, [pathToSave, '/ensembleLength' suffix]);
     
     save([pathToSave, '/optimMainRes' suffix]); %, 'x', 'y', 'sol', 'traj');
-    animateFlight2(sol, traj, 'rmax', max(sol.r)*1.1, 'zhalfwidth', max(v), 'gridSize', [40 30], 'figSize', [800 600], 'fileName', [pathToSave '/wangFig' suffix '.avi']);
+    animateFlight(sol, traj, 'rmax', max(sol.r)*1.1, 'zhalfwidth', max(v), 'gridSize', [40 30], 'figSize', [800 600], 'fileName', [pathToSave '/wangFig' suffix]);
     
     %Сохраняем результаты в виде текста
-    %[r0, v0] = XtoPhase(traj.rv(:, 1));
-    %[sol, r, v, tmax] = XtoStruct(x, geom, sol, r0, v0);
-    %[sol, r, v, tmax] = XtoStruct(x, r0, v0);
     Estart = getValue(x, 'EStart')/getValue(getScale(), 'EStart');
     f = fopen([pathToSave, '/params', suffix, '.txt'], 'w+');    
     fprintf(f, 'E0 = %g MeV\n', Estart*1e-6);
@@ -148,9 +130,6 @@ function idx = getDim(name)
 end
 
 function val = getValue(x, name)
-    %scale = getScale();
-    %dim_idx = getDim(name);
-    %val = x(dim_idx)/scale(dim_idx);
     val = x(getDim(name));
 end
     
@@ -211,7 +190,7 @@ function [EMsolution, r, v, tmax, x] = XtoStruct(x, r0, v0)
 %     [r0, v0] = createElectronsEnsemble(geom.r(1)*0.1, [0 1e-4], 'random', 1e+3);
 end
 
-function x = StructToX(r1, dr, EMamplitude, EMphase, tmax)
+function x = structToX(r1, dr, EMamplitude, EMphase, tmax)
     x = zeros(3, 1);
     x(getDim('r1')) = r1;
     x(getDim('r2_minus_r1')) = dr;
@@ -222,43 +201,40 @@ function x = StructToX(r1, dr, EMamplitude, EMphase, tmax)
 end
 
 %function [v, EMsolution, traj] = targetFcnExtended(x, r0, v0, electronsPerParticle)
-function v = targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub)
+function res = targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub)
 %fmincon function can violate constrains at intermediate iterations. We
 %expand our target function beyond [lb, ub] 
     [EMsolution, r0, v0, tmax] = XtoStruct(x, r0, v0);
     %Check violation of boundaries for tmax only. If tmax < 0 then ode45
-    %solver produces inacceptable sequence of points.
+    %solver produces unfeasible points
     x(x < lb) = lb(x < lb);
     x(x > ub) = ub(x > ub);
     if tmax == 0
-        v = getEnsembleLength(r0);
+        res = getEnsembleLength(r0);
         return;
     end
-    %[v, EMsolution, traj] = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle);
-    v = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle);
-end
-    
-   
-%function [v, EMsolution, traj] = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle)    
-function res = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle)
     tspan = [0 tmax];
     traj = simElectrons(r0, v0, EMsolution, tspan, electronsPerParticle);
-
-    % вычисляем длину ансамбля как функцию времени
-    v = zeros(numel(traj.t), 1);
+    res = targetFcn(traj);
+end
+   
+   
+%function [v, EMsolution, traj] = targetFcn(EMsolution, r0, v0, tmax, electronsPerParticle)    
+function res = targetFcn(traj)
+    % вычисляем длину (диаметр) ансамбля как функцию времени
+    diam = zeros(numel(traj.t), 1);
     for n = 1 : numel(traj.t)
-        v(n) = getEnsembleLength(traj.Z(:, n));
+        diam(n) = getEnsembleLength(traj.Z(:, n));
     end
-
     %Результат - минимальная длина ансамбля
-    res = min(v);
-
+    res = diam(len);
     
+    %Старый способ:
     %Результат - это средня длина ансамбля за последнюю p-часть  времени
-    % v = griddedInterpolant(traj.t, v);
-    % p = 0.2; % какую часть времени, начиная с хвоста, учитывать при вычислении среднего
-    % t = linspace(tspan(1) + diff(tspan)*(1-p), tspan(2), 1000);
-    % res = max(v(t));
+    %v = griddedInterpolant(traj.t, diam);
+    %p = 0.2; % какую часть времени, начиная с хвоста, учитывать при вычислении среднего
+    %t = linspace(tspan(1) + diff(tspan)*(1-p), tspan(2), 1000);
+    %res = max(len(t));
 end
 
 function traj = simflight(EMsolution, r0, v0, tmax, electronsPerParticle)    
@@ -266,12 +242,9 @@ function traj = simflight(EMsolution, r0, v0, tmax, electronsPerParticle)
     traj = simElectrons(r0, v0, EMsolution, tspan, electronsPerParticle);
 end
 
-function v = getEnsembleLength(Z)
-    zz = sort(Z);
-%     nOutliers = floor(numel(zz)/10);
-    nOutliers = 0; %выбросы недопустимы
-    v = abs(zz(end - nOutliers) - zz(1 + nOutliers));
-%     zmin = min(Z);
-%     zmax = max(Z); 
-%     v = zmax - zmin;    
+function v = getEnsembleLength(Z)    
+    % fast version:
+    v = max(Z) - min(Z);
+    % robust version:
+    % v = 2.0*std2(Z);
 end

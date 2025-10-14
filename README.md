@@ -23,6 +23,7 @@ see results
 
 see figures
 
+gifsicle -O3 --color 256 -i input.gif -o output.gif
 
 camelCase
 

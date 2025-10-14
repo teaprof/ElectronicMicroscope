@@ -35,5 +35,5 @@ function sol = simMain
     traj = simElectrons(r0, v0, sol, tspan, electronsPerParticle);
     toc    
     
-    animateFlight2(sol, traj, 'rmax', max(sol.r)*1.1, 'zhalfwidth', lambda, 'gridSize', [40 30], 'fileName', 'figures/simMain.avi');
+    animateFlight(sol, traj, 'rmax', max(sol.r)*1.1, 'zhalfwidth', lambda, 'gridSize', [40 30], 'fileName', 'figures/simMain');
 end

@@ -1,4 +1,4 @@
-function animateFlight2(EMfieldSolution, traj, varargin)
+function animateFlight(EMfieldSolution, traj, varargin)
     %Парсим параметры
     parser = inputParser;
     parser.addParameter('zhalfwidth', 1e-5, @isnumeric);
@@ -129,9 +129,9 @@ function animateFlight2(EMfieldSolution, traj, varargin)
     ttt = text(ax1, 0.1, 1, 'time', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
 
     %Моменты времени для кадров
-    tFrames = linspace(min(t), max(t), 1 + 1e+3);
+    tFrames = linspace(min(t), max(t), 1 + 2e+2);
     
-    vidObj = VideoWriter(params.fileName);
+    vidObj = VideoWriter([params.fileName '.avi']);
     open(vidObj);
     %Анимация
     ax1Controller = AxesController(ax1, 'ZX');
@@ -187,8 +187,19 @@ function animateFlight2(EMfieldSolution, traj, varargin)
         caxis(axside1, caxis(ax1));
         caxis(axside2, caxis(ax2));
         drawnow;
+
+        % Write avi
         currFrame = getframe(fig);
         writeVideo(vidObj, currFrame);
+
+        % Write gif animation
+        im = frame2im(currFrame);
+        [A, map] = rgb2ind(im, 256);
+        if n == 1
+            imwrite(A, map, [params.fileName '.gif'], 'gif', 'LoopCount', Inf, 'DelayTime', 0.7);
+        else
+            imwrite(A, map, [params.fileName '.gif'], 'gif', 'DelayTime', 0.7, 'WriteMode', 'append');
+        end
     end
     
     close(vidObj);
