@@ -1,4 +1,4 @@
-function [X, Y, Z, VX, VY, VZ] = solToPhase(odesol)
+function [X, Y, Z, VX, VY, VZ] = odeSolToPhase(odesol)
 %See also: XtoPhase, PhaseToX
     x = odesol.y;
     N = size(x, 1)/6;

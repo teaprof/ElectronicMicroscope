@@ -25,10 +25,10 @@ classdef ColorPlane
             obj.faces = zeros((Nrows-1)*(Ncols-1), 4);
             for nrow = 1 : Nrows - 1
                 for ncol = 1 : Ncols - 1
-                    bottomleftidx  = physicalPlane.MultiIndexToSingleIndex(nrow,   ncol);
-                    bottomrightidx = physicalPlane.MultiIndexToSingleIndex(nrow+1, ncol);
-                    topleftidx     = physicalPlane.MultiIndexToSingleIndex(nrow,   ncol+1);
-                    toprightidx    = physicalPlane.MultiIndexToSingleIndex(nrow+1, ncol+1);
+                    bottomleftidx  = physicalPlane.multiIndexToSingleIndex(nrow,   ncol);
+                    bottomrightidx = physicalPlane.multiIndexToSingleIndex(nrow+1, ncol);
+                    topleftidx     = physicalPlane.multiIndexToSingleIndex(nrow,   ncol+1);
+                    toprightidx    = physicalPlane.multiIndexToSingleIndex(nrow+1, ncol+1);
                     obj.faces(nrow + (ncol-1)*(Nrows-1), :) = [bottomleftidx bottomrightidx toprightidx topleftidx];
                 end
             end

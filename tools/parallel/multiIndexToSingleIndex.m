@@ -1,6 +1,6 @@
-function IDX = MultiIndexToSingleIndex(MultiIndex, MaxValues)
+function IDX = multiIndexToSingleIndex(MultiIndex, MaxValues)
 %
-%function IDX = MultiIndexToSingleIndex(MultiIndex, MaxValues)
+%function IDX = multiIndexToSingleIndex(MultiIndex, MaxValues)
 %отображает множество индексов (i1, i2, ..., ik) на один индекс
 %используетс€ дл€ организации одного parfor-цикла вместо множества
 %вложенных циклов
@@ -11,14 +11,14 @@ function IDX = MultiIndexToSingleIndex(MultiIndex, MaxValues)
 %если размерность известна только в момент выполнени€ программы.
 %
 % ¬ызов
-%   IDX = MultiIndexToSingleIndex(MultiIndex, MaxValues)
+%   IDX = multiIndexToSingleIndex(MultiIndex, MaxValues)
 % полностью эквивалентен вызову
 %   subs = num2cell(MultiIndex);
 %   IDX = sub2ind(MaxValues, subs{:});
 % но не использует при этом cell arrays.
 %
 %see also: 
-%   SingleIndexToMultiIndex
+%   singleIndexToMultiIndex
 %   sub2ind ind2sub
     IDX = 0;
     M = 1;

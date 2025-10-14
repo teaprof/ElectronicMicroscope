@@ -22,7 +22,7 @@ classdef PhysicalPlane < handle
             obj.vertices = zeros(3, Nrows*Ncols);            
             for nrow = 1 : Nrows
                 for ncol = 1 : Ncols
-                    bottomleftidx  = obj.MultiIndexToSingleIndex(nrow, ncol);
+                    bottomleftidx  = obj.multiIndexToSingleIndex(nrow, ncol);
                     obj.vertices0(:, bottomleftidx) = [meshx(nrow, ncol); meshy(nrow, ncol); meshz(nrow, ncol)];
                 end
             end
@@ -35,7 +35,7 @@ classdef PhysicalPlane < handle
         function r = cols(obj)
             r = size(obj.meshx, 2);
         end
-        function idx = MultiIndexToSingleIndex(obj, nrow, ncol)
+        function idx = multiIndexToSingleIndex(obj, nrow, ncol)
             Nrows = obj.rows;
             idx = nrow + Nrows*(ncol-1);
         end

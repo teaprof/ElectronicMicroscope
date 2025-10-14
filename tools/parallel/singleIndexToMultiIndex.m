@@ -1,10 +1,10 @@
-function varargout = SingleIndexToMultiIndex(Index, MaxValues)
-%function MultiIndex = SingleIndexToMultiIndex(Index, MaxValues)
+function varargout = singleIndexToMultiIndex(Index, MaxValues)
+%function MultiIndex = singleIndexToMultiIndex(Index, MaxValues)
 %преобразует Index из отрезка [1 prod(MaxValues)] в массив MultiIndex, 
 %такой что 1<=MultiIndex(i)<=MaxValues(i)
 %
 %Вызов
-%   MultiIndex = SingleIndexToMultiIndex(Index, MaxValues)
+%   MultiIndex = singleIndexToMultiIndex(Index, MaxValues)
 %эквивалентен вызову
 %   dim = numel(MaxValues)
 %   c = cell([1 dim]);
@@ -16,19 +16,19 @@ function varargout = SingleIndexToMultiIndex(Index, MaxValues)
 %   MaxValues = [10 15];
 %   res = zeros(1, prod(MaxValues));
 %   parfor k = 1 : prod(MaxValues)
-%       MultiIndex = SingleIndexToMultiIndex(k, MaxValues);
+%       MultiIndex = singleIndexToMultiIndex(k, MaxValues);
 %       res(k) = sin(MultiIndex(1)/MaxValues(1)*2*pi + MultiIndex(2)/MaxValues(2)*2*pi);
 %   end
 %   
 %   z = zeros(MaxValues);
 %   for k = 1 : prod(MaxValues)
-%       MultiIndex = SingleIndexToMultiIndex(k, MaxValues)
+%       MultiIndex = singleIndexToMultiIndex(k, MaxValues)
 %       z(MultiIndex(1), MultiIndex(2)) = res(k);
 %   end
 %   surf(z)
 %
 %
-%see also: MultiIndexToSingleIndex, ind2sub, sub2ind
+%see also: multiIndexToSingleIndex, ind2sub, sub2ind
     MultiIndex = zeros(size(MaxValues));
     Index = Index - 1;
     for i = 1 : numel(MaxValues)

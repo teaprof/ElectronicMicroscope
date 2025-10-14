@@ -5,7 +5,7 @@
 
 Use GPU
 Use MATLAB interpreter
-Use codegen
+Use codegen: codegen getEBClassicCoder
 
 benchEBClassicVariants
 
@@ -14,3 +14,27 @@ drawEM
 simMain
 
 optimMain
+
+parpool before all
+
+simMain approx 1 hour (2696 v3)
+
+see results
+
+see figures
+
+
+camelCase
+
+
+rightSideClassic:
+    %[E, B] = getFieldClassic(q, r, v);            %эталонная реализация
+    %[E, B] = getFieldClassicVectorized(q, r, v);
+    %[E, B] = getFieldClassicGPU(q, r, v);
+    [E, B] = getFieldClassicCoderMex(q, r, v);     %самый быстрый, см. benchEBClassicVariants
+
+
+retarded -- very slow
+
+
+exportGraphics

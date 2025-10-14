@@ -1,19 +1,19 @@
 function traj = simElectrons(r0, v0, EMfieldSolution, tspan, electronsPerParticle)
     x0 = PhaseToX(r0, v0);
     N = size(r0, 2);    
-%1. Interaction with retarded potentials    
-%     sol = ode_retarded(@(t, x, thistory, xhistory) rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution, electronsPerParticle), tspan, x0, 'acceleration');
+%1. Interaction with retarded potentials
+    % sol = ode_retarded(@(t, x, thistory, xhistory) rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution), tspan, x0, 'acceleration');
 
 %2. Interaction with classic potentials
     sol = ode45(@(t, x) rightSideClassic(t, x, N, EMfieldSolution, electronsPerParticle), tspan, x0);
 
 %3. No interaction 
-%    sol = ode45(@(t, x) rightSideNoInteraction(t, x, N, EMfieldSolution), tspan, x0);
+%   sol = ode45(@(t, x) rightSideNoInteraction(t, x, N, EMfieldSolution), tspan, x0);
     
     traj.t = sol.x;
     traj.rv = sol.y;
     traj.Nparticles = N;
-    [X, Y, Z] = odesolToPhase(sol);
+    [X, Y, Z] = odeSolToPhase(sol);
     traj.X = X; traj.Y = Y; traj.Z = Z;
 %     checkEnergyLaw(traj);
 end
@@ -117,14 +117,6 @@ function x = rkstep_retarded(fcn, t0, x0, step, thistory, xhistory)
     xhist_ext(:, end) = x4;
     k4 = fcn(t4, x4, thist_ext, xhist_ext);
     x = x0 + step/6*(k1 + 2*k2 + 2*k3 + k4);
-end
-
-function [xhist, vhist] = PhaseToHistory(xhistory, particlen)
-    N = size(xhistory, 1)/6;
-    idx = (particlen-1)*3 + 1;
-    xhist = xhistory(idx:idx+2, :);
-    idx = 3*N + idx;
-    vhist = xhistory(idx:idx+2, :);
 end
 
 

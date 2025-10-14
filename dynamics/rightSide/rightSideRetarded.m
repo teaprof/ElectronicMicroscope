@@ -25,7 +25,7 @@ function xt = rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution)
             if n == k
                 continue;
             end
-            [xhist, vhist] = PhaseToHistory(xhistory, k);
+            [xhist, vhist] = phaseToHistory(xhistory, k);
             [Ek, Bk] = getFieldRetarded(t, r(:, n),  xhist, vhist, thistory);
             E = E + Ek;
             B = B + Bk;

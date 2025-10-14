@@ -13,13 +13,12 @@ function optimMain
     range(getDim('EMphase'), :) = pi + [pi/2-0.1 pi/2+-0.1]; %рад
     range(getDim('EMphase'), :) = [0, 2*pi]; %рад
     range(getDim('EStart'), :) = [0.6 200]*1e+6; %эВ
-    range(getDim('tmax'), :) = [20e-12 300e-12]; %с
-    range(getDim('tmax'), :) = [20e-12 20e-12]; %с
+    range(getDim('tmax'), :) = [30e-12 30e-12]; %с
     assert(prod(prod(~isnan(range))) == 1); %если ничего не забыли проинициализировать, то NaN быть не должно
     lb = range(:, 1).*getScale;
     ub = range(:, 2).*getScale;
     
-    electronsPerParticle = 1e+2;
+    electronsPerParticle = 1e+2; % этот параметр не нужен, так как соотношение заряда и массы не зависит от числа электронов, формирующих макрочастицу
     
     %Создаём ансамбль частиц, распределённых в цилиндре радиусом 1 и
     %высотой 1. Этот ансамбль будет потом в соответствующих пропорциях
@@ -31,7 +30,7 @@ function optimMain
 %     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'grid', 5, 5, 19, 19);
 %     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'regular', 5, 5);
 %   [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'unirandom', 1e+2);
-    [r0, v0] = createElectronsEnsemble(1, 0.5, [-0.5 0.5], 'normal', 1e+2); %todo: magic values 1->waveguide inner radius, 1e-4 -> waveguide len
+    [r0, v0] = createElectronsEnsemble(1, 0.5, [-0.5 0.5], 'normal', 1e+3); %todo: magic values 1->waveguide inner radius, 1e-4 -> waveguide len
     
     NParticles = size(r0, 2);
     
@@ -40,7 +39,7 @@ function optimMain
     
    
     %Глобальный поиск
-    NTrials = 1e+5; %количество статистических испытаний для глобального поиска
+    NTrials = 1e+4; %количество статистических испытаний для глобального поиска
     Nbest = min(NTrials, 20); %количество решений, которые будут дожиматься локальным оптимизатором
     f = @(x)targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);
@@ -113,7 +112,7 @@ function OutputSolution(x, r0, v0, electronsPerParticle, pathToSave, suffix)
     Estart = getValue(x, 'EStart')/getValue(getScale(), 'EStart');
     f = fopen([pathToSave, '/params', suffix, '.txt'], 'w+');    
     fprintf(f, 'E0 = %g MeV\n', Estart*1e-6);
-    fprintf(f, 'V0 = %g *c\n', EnergyToSpeed(Estart)/getSpeedOfLight);
+    fprintf(f, 'V0 = %g *c\n', energyToSpeed(Estart)/getSpeedOfLight);
     fprintf(f, 'kz = %g 1/m\n', sol.kz);
     fprintf(f, 'Ez = %g V/m\n', sol.C1(1));
     fprintf(f, 'phase = %f rad\n', sol.phase);
@@ -178,7 +177,7 @@ function [EMsolution, r, v, tmax, x] = XtoStruct(x, r0, v0)
     tmax = getValue(x, 'tmax'); %длительность полёта
     
     r2 = r1 + r2_minus_r1;
-    v0norm = EnergyToSpeed(Estart);
+    v0norm = energyToSpeed(Estart);
     
     
     %Находим нужную моду решения в волноводе
