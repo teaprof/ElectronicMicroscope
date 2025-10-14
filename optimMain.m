@@ -227,7 +227,7 @@ function res = targetFcn(traj)
         diam(n) = getEnsembleLength(traj.Z(:, n));
     end
     %Результат - минимальная длина ансамбля
-    res = diam(len);
+    res = min(diam);
     
     %Старый способ:
     %Результат - это средня длина ансамбля за последнюю p-часть  времени
