@@ -1,9 +1,11 @@
 function [E, B] = getEBClassicCoder(q, r, v)
-    if nargin == 0
-        N = 1e+3;
-        r = rand(3, N);
-        v = rand(3, N);
-        q = getElectronCharge;
+% This function is used for codegeneration: just type
+%       codegen getEBClassicCoder
+% to generate mex-file.
+    arguments
+        q (1, 1) double
+        r (3, :) double
+        v (3, :) double
     end
     eps0 = getEps0;
     mju0 = getMju0;

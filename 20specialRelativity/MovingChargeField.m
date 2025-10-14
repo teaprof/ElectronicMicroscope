@@ -1,10 +1,16 @@
 classdef MovingChargeField
+% This class wraps the functions neccessary to calculate the EM field
+% induced by the moving charged particles. These functions are well tested.
+%
+% Directly, these functions are not used by the project since they are very
+% slow. But these functions are used to verify other highly-optimized 
+% functions that do the same job quickly.
     methods(Static)
         function simPotential
         %function simPotential
-        %Рисует потенциал движущегося точечного заряда
-        %todo: сравнить с Е.Ю.Петров "Излучение электромагнитных волн движущимися
-        %заряженными частицами", Учебное пособие НижГУ им Лобачевского
+        % Рисует потенциал движущегося точечного заряда
+        % todo: сравнить с Е.Ю.Петров "Излучение электромагнитных волн движущимися
+        % заряженными частицами", Учебное пособие НижГУ им Лобачевского
             MovingChargeField.selfTest;
             
             v = [1; 0; 0]; %m/s;
@@ -12,8 +18,8 @@ classdef MovingChargeField
             vsource_history = @(t) v;
             qsource = getElectronCharge;
             
-            x = [-1:0.1:1];
-            y = [-1:0.1:1];
+            x = [-1:0.05:1];
+            y = [-1:0.05:1];
             [xx, yy] = meshgrid(x, y);
             
             f = figure;
@@ -52,8 +58,8 @@ classdef MovingChargeField
         
         function selfTest
         %function selfTest
-        %Сравнивает аналитическое выражение для поля с численным расчётом и
-        %с классическим выражением
+        % Сравнивает аналитическое выражение для поля с численным расчётом и
+        % с классическим выражением
             v = [1; 0; 0]; %m/s;
             rsource_history = @(t) v*t;
             vsource_history = @(t) v;
@@ -72,18 +78,17 @@ classdef MovingChargeField
             assert(norm(Ea - Eclassic) < 1e-4*norm(Eclassic));
             
             assert(norm(Ba - Bclassic) < 1e-4*norm(Bclassic));
-            %assert(norm(Bnumerical - Bclassic) < 1e-4*norm(Bclassic));
-            %%из-за численных ошибок Bnumerical расходится как с Bclassic,
-            %%так и с Banalytical
+            assert(norm(Bnumerical - Bclassic) < 1e-4*norm(Bclassic));
+            % из-за ошибок округления Bnumerical иногда расходится как с Bclassic, так и с Banalytical:
+            %assert(norm(Bnumerical - Bclassic) < 1e-4*norm(Bclassic));            
         end
         
         function [E, B] = getEBclassic(qsource, rsource, vsource, r)
         %function [E, B] = getEBclassic(qsource, rsource, vsource, r)
-        %Вычисляет классическое поле при малых скоростях
-        %Для электростатического поля как 1/r^2,
-        %для магнитного - в соответствии с законом Био-Савара-Лапласа
-        %Это эталонная реализация, есть ещё ускоренные реализации:
-        %       getEBClassicElementwise
+        % Вычисляет классическое поле при малых скоростях
+        % Для электростатического поля как 1/r^2,
+        % для магнитного - в соответствии с законом Био-Савара-Лапласа
+        % Это эталонная реализация, есть ещё ускоренные реализации:
         %       getEBClassicVectorized
         %       getEBClassicGPU
         %       getEBClassicCoder
@@ -105,8 +110,8 @@ classdef MovingChargeField
         
         function [E, B] = getEBanalytical(qsource, rsource_history, vsource_history, r, t)
         %function [E, B] = getEBanalytical(qsource, rsource_history, vsource_history, r, t)
-        %Аналитические релятивистские выражения для элмагн поля с учётом запаздывания
-        %потенциала
+        % Аналитические релятивистские выражения для элмагн поля с учётом запаздывания
+        % потенциала
             %source: https://en.wikipedia.org/wiki/Liénard–Wiechert_potential
             t_retarded = MovingChargeField.getRetarded(rsource_history, r, t);
             rsource_retarded = rsource_history(t_retarded);
@@ -133,10 +138,10 @@ classdef MovingChargeField
         
         function [E, B] = getEBnumerical(qsource, rsource_history, vsource_history, r, t)
         %function [E, B] = getEBnumerical(qsource, rsource_history, vsource_history, r, t)
-        %Численные релятивистские выражения для элмагн поля с учётом запаздывания
-        %потенциала, численно дифференцируется потенциал Линарда-Витхерта.
-        %Функция работает неточно, в некоторых случаях заметно расходится с
-        %getEBanalytical из-за численной погрешности
+        % Численные релятивистские выражения для элмагн поля с учётом запаздывания
+        % потенциала, численно дифференцируется потенциал Линарда-Витхерта.
+        % Функция работает неточно, в некоторых случаях заметно расходится с
+        % getEBanalytical из-за численной погрешности
             %source: https://en.wikipedia.org/wiki/Liénard–Wiechert_potential
             phi = @(r) MovingChargeField.getLienardWiechertPotentials_retarded(qsource, rsource_history, vsource_history, r, t);
             grad_phi = MovingChargeField.grad(phi, r);
