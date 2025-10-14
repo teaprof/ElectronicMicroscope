@@ -1,15 +1,15 @@
 classdef geometry
     properties
-        %Слой номер i имеет радиусы:
-        %   r(i-1) - внутренний, если i > 1, иначе 0
-        %   r(i) - внешний
-        %   eps(i) - диэлектрическую проницаемость
-        %   mju(i) - магнитную проницаемость
+        % i-th layer has the following params:
+        %   r(i-1) - inner radius if i > 0, for i = 0 inner radius is 0
+        %   r(i) - outer radius
+        %   eps(i) - relative permittivity
+        %   mju(i) - magnetic permeability
 
-        nlayers % количество слоёв
-        r       % внешние радиусы слоёв, м
-        eps     % комплексная диэлектрическая проницаемость слоёв
-        mju     % комплексная магнитная проницаемость слоёв
+        nlayers % number of layers
+        r       % outer radiuses of layers
+        eps     % complex relative permittivity
+        mju     % magnetic permittivity (equals to 1 but can be complex too)
     end
     methods
         %Constructor
@@ -56,7 +56,7 @@ classdef geometry
                     obj = addLayer(obj, 5.5, 1, 1e-3 + r*1e-4); %todo: make as parameters
                 end
             else
-                assert(sprintf('Unknown geomtype: %s', geomtype))
+                error('Unknown geomtype: %s', geomtype)
             end
         end
         function obj = addLayer(obj, eps, mju, r_outer)

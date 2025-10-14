@@ -6,3 +6,11 @@
 Use GPU
 Use MATLAB interpreter
 Use codegen
+
+benchEBClassicVariants
+
+drawEM
+
+simMain
+
+optimMain

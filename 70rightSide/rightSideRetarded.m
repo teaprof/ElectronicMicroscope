@@ -1,4 +1,10 @@
 function xt = rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution)
+% function xt = rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution)
+% The rhs for ode45 with retarded potential and interaction between particles 
+%
+% See also:
+% rightSideNoInteraction, rightSideClassic, rightSideRetarded
+
 %Несмотря на то, что учитывается запаздывающий потенциал, для уравнения
 %движения используется нерелятивистское приближение, а именно: dv/dt = F.
 %В релятивистком случае надо рассматривать d(gamma(t)*m*v(t))/dt = F,
@@ -15,15 +21,15 @@ function xt = rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution)
         Scale = 1e+3;
         E = E * Scale;
         B = B * Scale*0;
-%         for k = 1 : N
-%             if n == k
-%                 continue;
-%             end
-%             [xhist, vhist] = PhaseToHistory(xhistory, k);
-%             [Ek, Bk] = getFieldRetarded(t, r(:, n),  xhist, vhist, thistory);
-%             E = E + Ek;
-%             B = B + Bk;
-%         end
+        for k = 1 : N
+            if n == k
+                continue;
+            end
+            [xhist, vhist] = PhaseToHistory(xhistory, k);
+            [Ek, Bk] = getFieldRetarded(t, r(:, n),  xhist, vhist, thistory);
+            E = E + Ek;
+            B = B + Bk;
+        end
         vt(:, n) = vt(:, n) + getAcceleration(q, m, v(:, n), E, B);
         assert(isreal(vt));
     end

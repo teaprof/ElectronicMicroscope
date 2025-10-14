@@ -1,4 +1,7 @@
 classdef WaveguideSolver
+%classdef WaveguideSolverub
+%   Solve the waveguide equation finding such values for kz for which the
+%   solution exists. 
     properties
         sol
         solutions
@@ -9,76 +12,76 @@ classdef WaveguideSolver
             obj.solutions = {};
         end
         
-        function obj = solve(obj)
-            [x0, lb, ub] = obj.solToX;
-            lb(lb == -Inf) = -1e+5;
-            ub(ub == Inf) = 1e+5;
-            f = @(x) targetFcn(obj, unfold(obj, x, lb, ub));
-            lbfolded = fold(obj, lb, lb, ub);
-            ubfolded = fold(obj, ub, lb, ub);
+        function obj = solve(obj, nSolutions)
+            if nargin < 2
+                nSolutions = 1;
+            end
+            % Initialize feasible region [lb0, ub0]
+            [x0, lb0, ub0] = obj.solToX;            
+            lb0(lb0 == -Inf) = -1e+5;
+            ub0(ub0 == Inf) = 1e+5;
+            % Last elements of lb0 and ub0 corresponds to kz, we require
+            % that the search range for kz in non-empty and will not be
+            % collapsed (later we address to kz values as x(end, :):           
+            % assert(lb0(end) < ub0(end))
+
+            % Collapse the dimensions for which lb0 = ub0
+            lb = WaveguideSolver.collapse(lb0, lb0, ub0);
+            ub = WaveguideSolver.collapse(ub0, lb0, ub0);
+
+            % Create target function
+            f = @(x) targetFcn(obj, WaveguideSolver.uncollapse(x, lb0, ub0));
+
+            % Set options for local optimizator algorithm
             opts = optimoptions('lsqnonlin', 'Display', 'none', 'FunctionTolerance', 1e-8, 'StepTolerance', 1e-12, 'MaxFunctionEvaluations', 1e+4, 'MaxIterations', 1e+4);
+
+            % Select initial values for kz to run optimizer from
+            kz_values = linspace(lb0(end), ub0(end), 1e+2);
+
+            % Alternative options and kz values:
             %opts2 = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt', 'Display', 'none'); %'FunctionTolerance', 1e-8, 'StepTolerance', 1e-12, 'MaxFunctionEvaluations', 1e+6, 'MaxIterations', 1e+6);
             %kz_values = linspace(obj.sol.k_vacuum, 1, 1e+2);
-            kz_values = logspace(log10(ub(end)), log10(lb(end)), 1e+2); %last element of ub and lb is kz
-            xcur = zeros(numel(lbfolded), numel(kz_values));
+
+            % Run optimizer starting from each kz
+            xcur = zeros(numel(lb), numel(kz_values));
             ycur = zeros(1, numel(kz_values));
             parfor n = 1 : numel(kz_values)
-            %for n = 1 : numel(kz_values)
-                x0cur = obj.setKz(kz_values(n), x0, lb, ub);
-                [xcur(:, n), ycur(n)] = lsqnonlin(f, fold(obj, x0cur, lb, ub), lbfolded, ubfolded, opts);
-%                 sol1 = obj.XtoSol(unfold(obj, xcur(:, n), lb, ub));
-%                 waveguidePlot(sol1);
-%                 f(xcur(:, n));
+                x0cur = obj.setKz(kz_values(n), x0, lb0, ub0);
+                [xcur(:, n), ycur(n)] = lsqnonlin(f, WaveguideSolver.collapse(x0cur, lb0, ub0), lb, ub, opts);
+                % For debug purposes: plot the solution
+                %sol1 = obj.XtoSol(uncollapse(obj, xcur(:, n), lb0, ub0));
+                %waveguidePlot(sol1);
             end
-            %удаляем значения, для которых не удалось достичь околонулевых
-            %значений ycur (суммы квадратов)
+
+            % Remove bad solutions
             idx = ycur < 1e-5;
             xcur = xcur(:, idx);
-            [~, idx] = obj.uniqapprox(xcur(end, :)); %массив всех возможных kz
-            for n = 1 : min(10, numel(idx))
-                x = xcur(:, idx(n));
-                obj.solutions{n} = obj.XtoSol(unfold(obj, x, lb, ub));
+
+            assert(sum(idx) > 0, "Can't find solution. Does it exist? Try to refine the set kz_values of initial values for kz")
+
+
+            % Uncollapse
+            x0cur = zeros(numel(lb0), size(xcur, 2));
+            for n = 1 : size(xcur, 2)
+                x0cur(:, n) = WaveguideSolver.uncollapse(xcur(:, n), lb0, ub0);                
+            end
+
+            % Join solutions that are close (we consider they equal)
+            [~, idx] = WaveguideSolver.uniqapprox(x0cur(end, :), 1e-6, 1e-3);
+
+            % Find best nSolutions solutions
+            for n = 1 : min(nSolutions, numel(idx))
+                obj.solutions{n} = obj.XtoSol(x0cur(:, idx(n)));
             end
             obj.sol = obj.solutions{1};
         end
-        
-        function [x, idx] = uniqapprox(obj, x)            
-            [x, sortidx] = sort(x, 'descend');
-            idx = 1;
-            value = x(1);
-            for n = 2 : numel(x)
-                curvalue = x(n);
-                if( abs(curvalue-value)/abs(value) < 1e-3 || abs(curvalue-value)< 1e-6 )
-                    continue;
-                end
-                idx(end+1) = n;
-                value = curvalue;
-            end
-            x = x(idx);
-            idx = sortidx(idx);
-        end        
-        
-        function xfolded = fold(obj, x, lb, ub)
-            idx = find(lb ~= ub);
-            xfolded = x(idx);
-        end
-        
-        function xunfolded = unfold(obj, x, lb, ub)
-            xunfolded = lb;
-            xk = 1;
-            for k = 1 : numel(lb)
-                if(lb(k) ~= ub(k))
-                    xunfolded(k) = x(xk);
-                    xk = xk + 1;
-                end
-            end
-        end
-        
+                
         function y = targetFcn(obj, x)
             obj.sol = obj.XtoSol(x);
-%             y = getGUSdiscrepancySimple1(obj);
-%             y = getGUSdiscrepancySimple2(obj);
-%             y = getGUSdiscrepancySimple3(obj);
+            % Use one of the following boundary conditions checkers:
+            %y = getGUSdiscrepancySimple1(obj);
+            %y = getGUSdiscrepancySimple2(obj);
+            %y = getGUSdiscrepancySimple3(obj);
             y = getGUSdiscrepancy(obj);
             y = y*1e+10;
         end
@@ -127,11 +130,10 @@ classdef WaveguideSolver
         
        
         function delta = getGUSdiscrepancySimple1(obj)
-        %Используется только функция getEzr
-        %Hphi принимается пропорциональной D
+        % Используется только функция getEzr
+        % Hphi принимается пропорциональной D
             nlayers = obj.sol.nlayers;
             delta = zeros(nlayers*4 - 1, 1);
-            phi = 0;
             for n = 1 : nlayers
                 r = obj.sol.r(n);
                 [Ezr1, dEzr1_dr] = getEzr(obj.sol, n, r);
@@ -144,9 +146,9 @@ classdef WaveguideSolver
                     Ezr2 = 0;
                     Hphi2 = Hphi1;
                 end                
-%                 fprintf('n = %d\n', n);
-%                 fprintf('Ez2 - Ez1 = %d + 1i*%d\n', real(Ez2 - Ez1), imag(Ez2 - Ez1));
-%                 fprintf('Hphi2 - Hphi1 = %d + 1i*%d\n', real(Hphi2 - Hphi1), imag(Hphi2 - Hphi1));
+                %fprintf('n = %d\n', n);
+                %fprintf('Ez2 - Ez1 = %d + 1i*%d\n', real(Ez2 - Ez1), imag(Ez2 - Ez1));
+                %fprintf('Hphi2 - Hphi1 = %d + 1i*%d\n', real(Hphi2 - Hphi1), imag(Hphi2 - Hphi1));
                 delta(n*4 - 3) = real(Ezr2 - Ezr1);
                 delta(n*4 - 2) = imag(Ezr2 - Ezr1);
                 delta(n*4 - 1) = real(Hphi1 - Hphi2);
@@ -169,9 +171,9 @@ classdef WaveguideSolver
                     Ezr2 = 0;
                     Bphiz2 = Bphiz1;
                 end                
-%                 fprintf('n = %d\n', n);
-%                 fprintf('Ez2 - Ez1 = %d + 1i*%d\n', real(Ez2 - Ez1), imag(Ez2 - Ez1));
-%                 fprintf('Hphi2 - Hphi1 = %d + 1i*%d\n', real(Hphi2 - Hphi1), imag(Hphi2 - Hphi1));
+                %fprintf('n = %d\n', n);
+                %fprintf('Ez2 - Ez1 = %d + 1i*%d\n', real(Ez2 - Ez1), imag(Ez2 - Ez1));
+                %fprintf('Hphi2 - Hphi1 = %d + 1i*%d\n', real(Hphi2 - Hphi1), imag(Hphi2 - Hphi1));
                 delta(n*4 - 3) = real(Ezr2 - Ezr1);
                 delta(n*4 - 2) = imag(Ezr2 - Ezr1);
                 delta(n*4 - 1) = real(Bphiz2-Bphiz1);
@@ -200,24 +202,53 @@ classdef WaveguideSolver
                     Ephi2 = 0;
                     Hz2 = Hz1;
                     Hphi2 = Hphi1;
-%                     delta(n*4 - 3) = Ez2 - Ez1; 
-%                     delta(n*4 - 2) = Ephi2 - Ephi1; %непрерывность касательных составляющих поля E, которое внутри металла равно 0
-%                     delta(n*4 - 1) = Br2 - Br1; %магнитных зарядов не существует - удовл автоматом для монохроматичных полей        
+                    %delta(n*4 - 3) = Ez2 - Ez1; 
+                    %delta(n*4 - 2) = Ephi2 - Ephi1; %непрерывность касательных составляющих поля E, которое внутри металла равно 0
+                    %delta(n*4 - 1) = Br2 - Br1; %магнитных зарядов не существует - удовл автоматом для монохроматичных полей        
                 end                
-%                 fprintf('n = %d\n', n);
-%                 fprintf('Ez2 - Ez1 = %d + 1i*%d\n', real(Ez2 - Ez1), imag(Ez2 - Ez1));
-%                 fprintf('Hphi2 - Hphi1 = %d + 1i*%d\n', real(Hphi2 - Hphi1), imag(Hphi2 - Hphi1));
+                %fprintf('n = %d\n', n);
+                %fprintf('Ez2 - Ez1 = %d + 1i*%d\n', real(Ez2 - Ez1), imag(Ez2 - Ez1));
+                %fprintf('Hphi2 - Hphi1 = %d + 1i*%d\n', real(Hphi2 - Hphi1), imag(Hphi2 - Hphi1));
                 delta(n*4 - 3) = real(Ez2 - Ez1);
                 delta(n*4 - 2) = imag(Ez2 - Ez1);
-%                 delta(n*4 - 2) = real(Ephi2 - Ephi1);
-%                 delta(n*4 - 1) = real(Hz2 - Hz1);
+                %delta(n*4 - 2) = real(Ephi2 - Ephi1);
+                %delta(n*4 - 1) = real(Hz2 - Hz1);
                 delta(n*4 - 1) = 1e+3*real(Hphi2 - Hphi1);
                 delta(n*4 - 0) = 1e+3*imag(Hphi2 - Hphi1);
             end
         end
-        
-        function plot(obj)
-            waveguidePlot(obj.sol);
-        end
     end
+    methods(Static)
+        function [x, idx] = uniqapprox(x, abstol, reltol)
+            [x, sortidx] = sort(x, 'descend');
+            idx = 1;
+            value = x(1);
+            for n = 2 : numel(x)
+                curvalue = x(n);
+                if( abs(curvalue-value)/abs(value) < reltol || abs(curvalue-value)< abstol )
+                    continue;
+                end
+                idx(end+1) = n;
+                value = curvalue;
+            end
+            x = x(idx);
+            idx = sortidx(idx);
+        end        
+        
+        function xcollapsed = collapse(x, lb, ub)
+            idx = lb ~= ub;
+            xcollapsed = x(idx);
+        end
+        
+        function xuncollapsed = uncollapse(x, lb, ub)
+            xuncollapsed = lb;
+            xk = 1;
+            for k = 1 : numel(lb)
+                if(lb(k) ~= ub(k))
+                    xuncollapsed(k) = x(xk);
+                    xk = xk + 1;
+                end
+            end
+        end
+    end    
 end

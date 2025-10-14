@@ -24,7 +24,12 @@ function benchEBClassicVariants
             t2(n) = t2(n) + toc;    
 
             tic;
-            [E3, B3] = getEBClassicGPU(qsource, r, v);
+            if canUseGPU
+                [E3, B3] = getEBClassicGPU(qsource, r, v);
+            else
+                E3 = E1;
+                B3 = B1;
+            end
             t3(n) = t3(n) + toc;    
 
             tic;
@@ -62,13 +67,20 @@ function benchEBClassicVariants
         fprintf('N particles:  %d\n', N(n));
         fprintf('%10s: %f sec\n', legenda{1}, t1(n));
         fprintf('%10s: %f sec\n', legenda{2}, t2(n));
-        fprintf('%10s: %f sec\n', legenda{3}, t3(n));
+        if canUseGPU
+            fprintf('%10s: %f sec\n', legenda{3}, t3(n));
+        end
         fprintf('%10s: %f sec\n', legenda{4}, t4(n));
         fprintf('%10s: %f sec\n', legenda{5}, t5(n));
         
         fprintf('%d out of %d finished\n\n', n, numel(N));        
     end
     fprintf('Tests passed, all Ok\n');
+
+    if ~canUseGPU
+        t3 = 0*t3;
+        warning('GPU not available');
+    end
 
     f = figure;
     hold on;
@@ -81,8 +93,10 @@ function benchEBClassicVariants
     grid on;
     set(gca, 'XScale', 'log');
     set(gca, 'YScale', 'log');
-    saveas(f, 'benchEBclassic.fig');
-    saveas(f, 'benchEBclassic.png');
+    xlabel('n particles');
+    ylabel('time, s');
+    saveas(f, 'figures/benchEBclassic.fig');
+    saveas(f, 'figures/benchEBclassic.png');
 end
 
 function [E, B] = getEBClassicElementwise(q, r, v)

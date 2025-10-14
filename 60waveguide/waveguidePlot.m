@@ -1,19 +1,30 @@
-function WaveguidePlot(sol) %рисовалка
+function waveguidePlot(sol, filename_base) %рисовалка
+    if nargin < 2
+        filename_base = [];
+    end
     if nargin == 0
-        geom = geometry;
+        geom = geometry('waveguide');
         w = 2*pi*1e+12;
         m = 0;
         waveguideSolver = WaveguideSolver(geom, w, m);
         waveguideSolver = waveguideSolver.solve;
         sol = waveguideSolver.sol;
     end
-%     WaveguidePlot3D(sol);
-%     WaveguidePlot2D(sol);
+    WaveguidePlot3D(sol);
+    if numel(filename_base) > 0
+        saveas(gcf, sprintf('%s%s.png', filename_base, '_3d'));
+    end
+    WaveguidePlot2D(sol);
+    if numel(filename_base) > 0
+        saveas(gcf, sprintf('%s%s.png', filename_base, '_1'));
+    end
     WaveguidePlot2D_2(sol);
+    if numel(filename_base) > 0
+        saveas(gcf, sprintf('%s%s.png', filename_base, '_2'));
+    end
 end
 
 function WaveguidePlot2D(sol) %рисовалка
-    %     figure;
     npointsPerLayer = 300;
     r = zeros(sol.nlayers*npointsPerLayer, 1);
     nlayer = zeros(sol.nlayers*npointsPerLayer, 1);
@@ -54,7 +65,6 @@ function WaveguidePlot2D(sol) %рисовалка
 end
 
 function WaveguidePlot2D_2(sol) %рисовалка
-    %     figure;
     npointsPerLayer = 300;
     r = zeros(sol.nlayers*npointsPerLayer, 1);
     nlayer = zeros(sol.nlayers*npointsPerLayer, 1);
@@ -87,7 +97,6 @@ end
 
 
 function WaveguidePlot3D(sol) %рисовалка
-    %     figure;
     npointsPerLayer = 20;
     r = zeros(sol.nlayers*npointsPerLayer, 1);
     nlayer = zeros(sol.nlayers*npointsPerLayer, 1);
@@ -100,11 +109,12 @@ function WaveguidePlot3D(sol) %рисовалка
         rmin = rmax;
     end
 
-    for n = 1 : numel(r)
-        Ezr(n) = sol.getEzr(nlayer(n), r(n));
-        Hzr(n) = sol.getHzr(nlayer(n), r(n));
-    end
-    %     plot(r, Ezr);
+    %for n = 1 : numel(r)
+    %  Ezr(n) = sol.getEzr(nlayer(n), r(n));
+    %  Hzr(n) = sol.getHzr(nlayer(n), r(n));
+    %end
+    %plot(r, Ezr);
+    %plot(r, Hzr);
 
 
     phi = linspace(0, 2*pi, 200);
