@@ -3,6 +3,10 @@
 This project simulates a Single Shot Diffraction microscope. The aim is to 
 find the best waveguide geometry which produces the maximum compression of the electron cloud.
 
+This project is inspired by the following work:
+
+1. **Wong, Jie & Fallahi, Arya & Kärtner, Franz.** (2013). *Compact electron acceleration and bunch compression in THz waveguides.* Optics Express. 21. 9792-9806. 10.1364/OE.21.009792. 
+([see here](https://www.researchgate.net/publication/236266731_Compact_electron_acceleration_and_bunch_compression_in_THz_waveguides))
 
 A Single-Shot Diffraction Microscope (SSDM) is an advanced optical imaging system 
 designed to capture ultrafast structural information about microscopic objects — 
