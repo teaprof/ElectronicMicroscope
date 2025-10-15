@@ -126,11 +126,15 @@ This rhs is used by default.
 The difference between this and previous implementation is that this implementation uses retarded potentials while calculating $\vec{E_{ij}}$ and $\vec{B_{ij}}$.
 They are called retarded because they depend on the state of the sources at an earlier ("retarded") time — the time when the electromagnetic influence left the source and started traveling toward the observation point.
 
-So, to find $E_{ij}$ and $B_{ij}$ we must find $t_r$ such that $t_r = t - \frac{|\vec{r}_i(t_r) - \vec{r}_j(t)|}{c}$ holds, where $\vec{r}_i(t_r)$ is the position of the $i$-th charged
-particle at time $t_r$, $\vec{r}_j(t)$ is the position of $j$-th particle at time $t$, $t$ is the current time, $c$ is the speed of light.
+So, to find $E_{ij}$ and $B_{ij}$ we must find $t_r$ such that
 
-This equaltion implies that we know $\vec{r}_i(t_r)$ function. This function is implemented by the linear interpolation algorithm that uses the list of all
-previous locations of $i$th particle.
+$t_r = t - \frac{\left|\vec{r}_i(t_r) - \vec{r}_j(t)\right|}{c}$
+
+holds, where $\vec{r}_i\left(t_r\right)$ is the position of the $i$-th charged
+particle at time $t_r$, $\vec{r}_j\left(t\right)$ is the position of $j$-th particle at time $t$, $t$ is the current time, $c$ is the speed of light.
+
+This equaltion implies that we know $\vec{r}_i\left(t_r\right)$ function. This function is implemented by the linear interpolation algorithm that uses the list of all
+previous locations of $i$-th particle.
 
 So, the resulting algorithm is very slow due to two reasons: on each step of Runge-Kutta it finds the zeros of the function defined as the interpolant. Interpolant
 is updated after each major step of Runge-Kutta solver which is time consuming too.
