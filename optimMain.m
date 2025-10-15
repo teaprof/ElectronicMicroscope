@@ -39,7 +39,7 @@ function optimMain
     
    
     %Глобальный поиск экстремума
-    NTrials = 1e+4; %количество статистических испытаний для глобального поиска
+    NTrials = 1e+3; %количество статистических испытаний для глобального поиска
     Nbest = min(NTrials, 20); %количество решений, которые будут дожиматься локальным оптимизатором
     f = @(x)targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);

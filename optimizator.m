@@ -10,7 +10,7 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     P = ProgressObj(NTrials);
     yy = zeros(1, NTrials);
     xx = zeros(numel(lb), NTrials);
-    for n = 1 : NTrials
+    parfor n = 1 : NTrials
         rng(seeds(n))
         x = lb + (ub - lb).*rand(size(lb));
         xx(:, n) = x;

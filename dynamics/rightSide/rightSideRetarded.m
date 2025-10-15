@@ -33,7 +33,7 @@ function xt = rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution)
         vt(:, n) = vt(:, n) + getAcceleration(q, m, v(:, n), E, B);
         assert(isreal(vt));
     end
-    xt = [rt(:); vt(:)];
+    xt = PhaseToX(rt, vt);
 end
 
 function [E, B] = getFieldRetarded(t, rdest, rsource_history, vsource_history, tsource_history)

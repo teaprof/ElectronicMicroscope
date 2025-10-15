@@ -1,14 +1,16 @@
 function traj = simElectrons(r0, v0, EMfieldSolution, tspan, electronsPerParticle)
     x0 = PhaseToX(r0, v0);
     N = size(r0, 2);    
-%1. Interaction with retarded potentials
-    % sol = ode_retarded(@(t, x, thistory, xhistory) rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution), tspan, x0, 'acceleration');
+
+%1. No interaction 
+    % sol = ode45(@(t, x) rightSideNoInteraction(t, x, N, EMfieldSolution), tspan, x0);
 
 %2. Interaction with classic potentials
     sol = ode45(@(t, x) rightSideClassic(t, x, N, EMfieldSolution, electronsPerParticle), tspan, x0);
 
-%3. No interaction 
-%   sol = ode45(@(t, x) rightSideNoInteraction(t, x, N, EMfieldSolution), tspan, x0);
+%3. Interaction with retarded potentials
+    % sol = ode_retarded(@(t, x, thistory, xhistory) rightSideRetarded(t, x, N, xhistory, thistory, EMfieldSolution), tspan, x0, 'acceleration');
+
     
     traj.t = sol.x;
     traj.rv = sol.y;

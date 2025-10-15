@@ -27,7 +27,7 @@ function xt = rightSideClassic(t, x, N, EMfieldSolution, electronsPerParticle)
     assert(isreal(vt));
     
     %Формируем результат
-    xt = [rt(:); vt(:)];
+    xt = PhaseToX(rt, vt);
 end
 
 
