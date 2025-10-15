@@ -1,4 +1,4 @@
-# What is this
+# Optimum design of the Single shot diffraction microscope
 
 This project simulates a Single Shot Diffraction microscope. The aim is to 
 find the best waveguide geometry which produces the maximum compression of the electron cloud.
