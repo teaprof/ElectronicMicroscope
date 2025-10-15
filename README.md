@@ -121,7 +121,7 @@ To compile `getFieldClassicCoderMex` just run `codegen getEBClassicCoder` from t
 
 Switching between these implementations can be done by commenting or uncommenting blocks in [rightSideClassic.m](./dynamics/rightSide/rightSideClassic.m).
 
-The following picture shows the performance of different implementations. On my *ASUS Z170 Pro with i7-6700K and EVGA GTX1080*. It is shown that mex-based implementation is slightly faster than others so this implementation is chosen by default.
+The following picture shows the performance of different implementations on my *ASUS Z170 Pro with i7-6700K and EVGA GTX1080*. It is shown that mex-based implementation is slightly faster than others so this implementation is chosen by default.
 
 ![benchEBClassic](./figures/benchEBclassic.png)
 
