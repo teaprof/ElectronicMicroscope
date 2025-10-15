@@ -10,7 +10,7 @@ classdef FlightView
             obj.params = params;
             obj.axes = axes;
             Zeros = zeros(NParticles, 1);
-            obj.particles = scatter3(axes, Zeros, Zeros, Zeros, 5, 'k');
+            obj.particles = scatter3(axes, Zeros, Zeros, Zeros, 3, 'k');
             set(axes, 'XLim', params.visualXRange, 'YLim', ...
                 params.visualYRange, 'ZLim', params.visualZRange);
             xlabel(axes, 'x');
