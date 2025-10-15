@@ -54,7 +54,7 @@ Here we consider the cylindrical (circular) waveguide which consists of two laye
 In this case we know the analytical solution which gives us $\vec{E}$ and $\vec{B}$ (or more precisely, $\vec{H}$) as functions
 of polar coordinates and time. We consider only $TM$ modes ($TE$ modes are not considered).
 
-The following figures shows the analytical solutions for different modes $m$.
+The following figures shows the different modes of EM-waves in the waveguide.
 
 ![TM 01_01_mode: Ez, Er](figures/TM_00_01_mode_EzEr.png)
 
