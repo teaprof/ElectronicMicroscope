@@ -1,7 +1,7 @@
 function optimMain
     rng(1);
     Clock = clock;
-    pathToSave = sprintf('results/run%4d-%02d-%02d-%02d-%02d-%02d', floor(Clock));
+    pathToSave = sprintf('optimresults/run%4d-%02d-%02d-%02d-%02d-%02d', floor(Clock));
     mkdir(pathToSave);
     
 %     assert(vstart < getSpeedOfLight/1.05);
@@ -27,10 +27,10 @@ function optimMain
     %Если генерить каждый раз новый ансамбль, то в расчётах значения целевой функции будет
     %статистическая погрешность, которая не даст нормально минимизировать
     %её значение традиционными методами.
-%     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'grid', 5, 5, 19, 19);
-%     [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'regular', 5, 5);
-%   [r0, v0] = createElectronsEnsemble(1, geom.r(1)*0.1, [0 1e-4], 'unirandom', 1e+2);
-    [r0, v0] = createElectronsEnsemble(1, 0.5, [-0.5 0.5], 'normal', 1e+3); %todo: magic values 1->waveguide inner radius, 1e-4 -> waveguide len
+    % [r0, v0] = createElectronsEnsemble(1, 0.9, [0 1], 'grid', 5, 5, 19, 19);
+    %[r0, v0] = createElectronsEnsemble(1, 0.9, [0 1e-4], 'regular', 5, 5);
+    [r0, v0] = createElectronsEnsemble(1, 0.5, [0 0.4], 'unirandom', 2e+2);
+    %[r0, v0] = createElectronsEnsemble(1, 0.5, [-0.5 0.5], 'normal', 1e+2); %todo: magic values 1->waveguide inner radius, 1e-4 -> waveguide len
     
     NParticles = size(r0, 2);
     
@@ -39,8 +39,8 @@ function optimMain
     
    
     %Глобальный поиск экстремума
-    NTrials = 1e+3; %количество статистических испытаний для глобального поиска
-    Nbest = min(NTrials, 20); %количество решений, которые будут дожиматься локальным оптимизатором
+    NTrials = 100; %количество статистических испытаний для глобального поиска
+    Nbest = min(NTrials, 8); %количество решений, которые будут дожиматься локальным оптимизатором
     f = @(x)targetFcnExtended(x, r0, v0, electronsPerParticle, lb, ub);
     [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest);
     %drawSlices(f, lb, ub, {'vphase', 'E', 'phase0', 'tspan'}) %тут можно вызвать другой визуализатор todo: переписать функцию для многомерного использования, а не только для dim=3    
@@ -52,12 +52,12 @@ function optimMain
             fprintf(' %f', xx(k, n));
         end
         fprintf('], y = %f mm\n', yy(n)*1e+3);
-    end
-           
+    end    
+               
     P = ProgressObj(Nbest);
-    parfor n = 1:Nbest
+    for n = 1:Nbest %sometimes parfor here doesn't work
         suffix = sprintf('%02d', n);
-        OutputSolution(xx(:, n), r0, v0, electronsPerParticle, pathToSave, suffix);            
+        OutputSolution(xx(:, n), r0, v0, electronsPerParticle, pathToSave, suffix);
         P.increase(1);
     end
     P.done();
@@ -66,8 +66,8 @@ end
 function OutputSolution(x, r0, v0, electronsPerParticle, pathToSave, suffix)
     %Пересчитываем траекторию с большей детализацией
     fprintf('Reconstructing optimal config track\n');
-    [sol, r, v, tmax, ~] = XtoStruct(x, r0, v0);
-    traj = simflight(sol, r, v, tmax, electronsPerParticle);    
+    [sol, r, diam, tmax, ~] = XtoStruct(x, r0, v0);
+    traj = simflight(sol, r, diam, tmax, electronsPerParticle);    
 
 
     y0 = getEnsembleLength(traj.Z(:, 1));
@@ -76,19 +76,25 @@ function OutputSolution(x, r0, v0, electronsPerParticle, pathToSave, suffix)
     fprintf('Final length %f mm\n', y*1e+3);
     fprintf('Compression level %f\n', y/y0);
     
-    v = zeros(numel(traj.t), 1);
+    diam = zeros(numel(traj.t), 1);
     for n = 1 : numel(traj.t)
-        v(n) = getEnsembleLength(traj.Z(:, n));
+        diam(n) = getEnsembleLength(traj.Z(:, n));
     end
     f = figure;
-    plot(traj.t*1e+12, v*1e+3);
+    plot(traj.t*1e+12, diam*1e+3);
     xlabel('t, ps');
     ylabel('length, mm');
     grid on;
     saveas(f, [pathToSave, '/ensembleLength' suffix]);
     
     save([pathToSave, '/optimMainRes' suffix]); %, 'x', 'y', 'sol', 'traj');
-    animateFlight(sol, traj, 'rmax', max(sol.r)*1.1, 'zhalfwidth', max(v), 'gridSize', [40 30], 'figSize', [800 600], 'fileName', [pathToSave '/wangFig' suffix]);
+    animateFlight(sol, traj, ...
+        'rmax', max(sol.r)*1.1, ...
+        'zhalfwidth', max(diam), ...
+        'gridSize', [40 30], ...
+        'figSize', [800 600], ...
+        'aviFileName', [pathToSave '/Fig' suffix '.avi'], ...
+        'gifFileName', [pathToSave '/Fig' suffix '.gif']);
     
     %Сохраняем результаты в виде текста
     Estart = getValue(x, 'EStart')/getValue(getScale(), 'EStart');
@@ -184,10 +190,6 @@ function [EMsolution, r, v, tmax, x] = XtoStruct(x, r0, v0)
     r(3, :) = r(3, :)*1e-4; %todo: make as parameter
 
     v = v0*v0norm;
-%     [r0, v0] = createElectronsEnsemble(Estart, r1, [0 3e-4], 'normal', 1e+2);
-%     [r0, v0] = createElectronsEnsemble(geom.r(1)*0.1, [0 1e-4], 'grid', 5, 5, 19, 19);
-%     [r0, v0] = createElectronsEnsemble(geom.r(1)*0.1, [0 1e-4], 'regular', 5, 5);
-%     [r0, v0] = createElectronsEnsemble(geom.r(1)*0.1, [0 1e-4], 'random', 1e+3);
 end
 
 function x = structToX(r1, dr, EMamplitude, EMphase, tmax)
@@ -246,5 +248,5 @@ function v = getEnsembleLength(Z)
     % fast version:
     v = max(Z) - min(Z);
     % robust version:
-    % v = 2.0*std2(Z);
+    %v = 2.0*std2(Z);
 end

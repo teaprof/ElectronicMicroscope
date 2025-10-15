@@ -1,6 +1,7 @@
 *.avi
+*.gif
 95video/*
-results/*
+optimresults/*
 *.mexw64
 *.mexa64
 *.bak

@@ -5,7 +5,9 @@ function animateFlight(EMfieldSolution, traj, varargin)
     parser.addParameter('rmax', 3e-3, @isnumeric);
     parser.addParameter('gridSize', [40 30], @(x) isnumeric(x) && (numel(x) == 2));
     parser.addParameter('figSize', [800 600], @(x) isnumeric(x) && (numel(x) == 2));
-    parser.addParameter('fileName', 'WangFig1.avi', @isstr);
+    parser.addParameter('aviFileName', 'Fig1.avi', @isstr);
+    parser.addParameter('gifFileName', '', @isstr);
+    parser.addParameter('nFrames', 100, @isnumeric);
     parser.parse(varargin{:});
     params = parser.Results;
     
@@ -129,10 +131,15 @@ function animateFlight(EMfieldSolution, traj, varargin)
     ttt = text(ax1, 0.1, 1, 'time', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
 
     %Моменты времени для кадров
-    tFrames = linspace(min(t), max(t), 1 + 2e+2);
+    tFrames = linspace(min(t), max(t), params.nFrames);
     
-    vidObj = VideoWriter([params.fileName '.avi']);
-    open(vidObj);
+    %Создаём video writer, если требуется
+    vidObj = [];
+    if(strlength(params.aviFileName) > 0)
+        vidObj = VideoWriter([params.aviFileName]);
+        open(vidObj);
+    end
+
     %Анимация
     ax1Controller = AxesController(ax1, 'ZX');
     ax2Controller = AxesController(ax2, 'ZX');
@@ -190,19 +197,24 @@ function animateFlight(EMfieldSolution, traj, varargin)
 
         % Write avi
         currFrame = getframe(fig);
-        writeVideo(vidObj, currFrame);
-
-        % Write gif animation
-        im = frame2im(currFrame);
-        [A, map] = rgb2ind(im, 256);
-        if n == 1
-            imwrite(A, map, [params.fileName '.gif'], 'gif', 'LoopCount', Inf, 'DelayTime', 0.7);
-        else
-            imwrite(A, map, [params.fileName '.gif'], 'gif', 'DelayTime', 0.7, 'WriteMode', 'append');
+        if(strlength(params.aviFileName) > 0)
+            writeVideo(vidObj, currFrame);
+        end
+    
+        if(strlength(params.gifFileName) > 0)
+            im = frame2im(currFrame);
+            [A, map] = rgb2ind(im, 256);
+            if n == 1
+                imwrite(A, map, params.gifFileName, 'gif', 'LoopCount', Inf, 'DelayTime', 0.4);
+            else
+                imwrite(A, map, params.gifFileName, 'gif', 'DelayTime', 0.4, 'WriteMode', 'append');
+            end
         end
     end
     
-    close(vidObj);
+    if(strlength(params.aviFileName) > 0)
+        close(vidObj);
+    end
 end
 
 

@@ -24,15 +24,11 @@ function [xx, yy] = optimizator(f, lb, ub, NTrials, Nbest)
     [yy, idx] = sort(yy);
     xx = xx(:, idx);
     
-    %Увеличиваем допустимые пределы по фазе перед локальной оптимизацией,
-    %чтобы алгоритм не упёрся в стенку.
-%     lb(3) = -100;
-%     ub(3) = +100;
-
     %Оставляем только лучшие решения
     Nbest = min(NTrials, Nbest);
-    yy = yy(idx(1:Nbest));
-    xx = xx(:, idx(1:Nbest));
+    yy = yy(1:Nbest);
+    xx = xx(:, 1:Nbest);
+    return
     
     %"Дожимаем" лучшие решения локальным солвером    
     fprintf('Local phase\n');
